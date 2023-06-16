@@ -32,7 +32,7 @@ export interface ElectronOptions {
      * It will mount the Electron App child-process to `process.electronApp`.  
      * @param argv default value `['.', '--no-sandbox']`
      */
-    startup: (argv?: string[]) => Promise<void>
+    startup: (argv?: string[], spawnFn?: Function) => Promise<void>
     /** Reload Electron-Renderer */
     reload: () => void
   }) => void | Promise<void>
@@ -106,15 +106,16 @@ export default function electron(options: ElectronOptions | ElectronOptions[]): 
  * It will mount the Electron App child-process to `process.electronApp`.  
  * @param argv default value `['.', '--no-sandbox']`
  */
-export async function startup(argv = ['.', '--no-sandbox']) {
+export async function startup(argv = ['.', '--no-sandbox'], spawnFn: any) {
   const { spawn } = await import('node:child_process')
   // @ts-ignore
   const electron = await import('electron')
-  const electronPath = <any>(electron.default ?? electron)
+  const _electronPath = <any>(electron.default ?? electron)
 
   startup.exit()
+
   // Start Electron.app
-  process.electronApp = spawn(electronPath, argv, { stdio: 'inherit' })
+  process.electronApp = spawnFn ? spawnFn() : spawn(_electronPath, argv, { stdio: 'inherit' })
   // Exit command after Electron.app exits
   process.electronApp.once('exit', process.exit)
 
